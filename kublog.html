@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Why Companies Choose Kubernetes: Case Studies and Benefits</title>
+<style>
+  :root {
+    --bg: #0b1021; --card: #121732; --muted: #9aa3b2; --text: #e8ebf4; --accent: #7aa2ff; --accent2: #3dd3b7;
+    --chip:#1b2142; --code:#0a0f24; --border:#20274a; --yellow:#ffd166;
+  }
+  html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,Segoe UI,Roboto,Helvetica,Arial}
+  a{color:var(--accent);text-decoration:none}
+  .container{max-width:1080px;margin:0 auto;padding:24px}
+  header.hero{padding:32px 0 12px;position:sticky;top:0;backdrop-filter:blur(6px);background:linear-gradient(180deg,rgba(11,16,33,.9),rgba(11,16,33,.6) 70%,transparent);z-index:10;border-bottom:1px solid var(--border)}
+  .title{font-size:28px;font-weight:800}
+  .subtitle{color:var(--muted);max-width:900px;margin-top:8px}
+  .badge{display:inline-flex;align-items:center;gap:8px;background:var(--chip);border:1px solid var(--border);padding:6px 10px;border-radius:999px;color:var(--muted);font-size:12px;margin-right:8px}
+  .layout{display:grid;grid-template-columns:260px 1fr;gap:20px}
+  @media(max-width:940px){.layout{grid-template-columns:1fr}}
+  .toc{position:sticky;top:88px;align-self:start}
+  .card{background:linear-gradient(180deg,var(--card),#0e1330);border:1px solid var(--border);border-radius:14px;padding:16px}
+  .tocnav a{display:block;padding:8px 10px;border-radius:8px;color:var(--muted);border:1px solid transparent}
+  .tocnav a.active,.tocnav a:hover{color:var(--text);background:var(--chip);border-color:var(--border)}
+  .grid{display:grid;gap:16px}
+  .grid.benefits{grid-template-columns:repeat(auto-fit,minmax(260px,1fr))}
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:8px 0 2px}
+  .pill,.tag{font-size:12px;color:var(--muted);background:var(--chip);padding:4px 8px;border-radius:999px;border:1px solid var(--border)}
+  .muted{color:var(--muted)}
+  code,pre{background:var(--code);color:#cbd5ff;border:1px solid var(--border);border-radius:10px}
+  pre{padding:14px;overflow:auto}
+  .copy{float:right;font-size:12px;background:var(--chip);border:1px solid var(--border);color:var(--muted);padding:4px 8px;border-radius:6px;cursor:pointer}
+  .case{border-left:3px solid var(--accent);padding-left:12px}
+  .quote{border-left:3px solid var(--accent2);padding-left:12px;font-style:italic;color:#cfe8ff}
+  .search{position:relative}
+  .search input{width:100%;padding:10px 12px;background:var(--chip);border:1px solid var(--border);border-radius:10px;color:var(--text)}
+  .table{border-collapse:collapse;width:100%;margin-top:8px}
+  .table th,.table td{border:1px solid var(--border);padding:10px;text-align:left}
+  .table th{background:#0f1631}
+  mark{background:rgba(122,162,255,.18);color:#e9edff;padding:2px 4px;border-radius:4px}
+  .kpi{display:flex;gap:12px;align-items:center;padding:10px 12px;background:var(--chip);border:1px dashed var(--border);border-radius:10px}
+  .kpi strong{color:var(--yellow)}
+</style>
+</head>
+<body>
+<header class="hero">
+  <div class="container">
+    <div class="title">Why Companies Choose Kubernetes: Case Studies, Benefits, and When It Fits</div>
+    <div class="subtitle">From elasticity and release velocity to platform engineering and portability—what real organizations achieve with Kubernetes.</div>
+    <div style="margin-top:12px;">
+      <span class="badge">Updated: Aug 09, 2025</span>
+      <span class="badge">Audience: CTOs, Platform Eng, Product</span>
+      <span class="badge">Format: Interactive</span>
+    </div>
+  </div>
+</header>
+
+<main class="container">
+  <section class="layout">
+    <aside class="toc card">
+      <div class="tocnav">
+        <a href="#benefits" class="active">Core Benefits</a>
+        <a href="#case-studies">Case Studies</a>
+        <a href="#patterns">Architecture Patterns</a>
+        <a href="#decision">Decision Guide</a>
+        <a href="#snippets">K8s Snippets</a>
+        <a href="#faqs">FAQs</a>
+      </div>
+      <p class="muted" style="margin-top:8px;">Use the search under case studies to filter by industry or outcome (e.g., “ML”, “government”, “velocity”).</p>
+    </aside>
+
+    <section>
+      <section id="benefits" class="card">
+        <h2>Core Business Benefits</h2>
+        <p class="muted">Kubernetes automates scaling, rollouts, and recovery, giving teams a consistent, portable runtime for containerized apps.</p>
+        <div class="grid benefits">
+          <div class="card">
+            <h3>Elastic Scalability</h3>
+            <p>Handle spikes with autoscaling and resilient scheduling.</p>
+            <div class="chips"><span class="pill">HPA</span><span class="pill">Cluster Autoscaler</span><span class="pill">Bin Packing</span></div>
+          </div>
+          <div class="card">
+            <h3>Developer Velocity</h3>
+            <p>Standardized deploys, automated rollouts/rollbacks, safer experiments.</p>
+            <div class="chips"><span class="pill">Canary</span><span class="pill">GitOps</span><span class="pill">Progressive Delivery</span></div>
+          </div>
+          <div class="card">
+            <h3>Reliability & Self-Healing</h3>
+            <p>Probes restart unhealthy pods; rescheduling limits blast radius.</p>
+            <div class="chips"><span class="pill">Liveness</span><span class="pill">Readiness</span><span class="pill">PDB</span></div>
+          </div>
+          <div class="card">
+            <h3>Portability & Multi-cloud</h3>
+            <p>Run the same containers anywhere a conformant cluster exists.</p>
+            <div class="chips"><span class="pill">CNCF</span><span class="pill">OCI</span><span class="pill">CSI/CNI</span></div>
+          </div>
+          <div class="card">
+            <h3>Cost Efficiency</h3>
+            <p>Right-size workloads and scale to demand to reduce waste.</p>
+            <div class="chips"><span class="pill">Requests/Limits</span><span class="pill">Spot/Preemptible</span></div>
+          </div>
+          <div class="card">
+            <h3>Platform Engineering</h3>
+            <p>Build internal PaaS with guardrails and self-service.</p>
+            <div class="chips"><span class="pill">Operators</span><span class="pill">OPA</span><span class="pill">Backstage</span></div>
+          </div>
+        </div>
+        <div style="margin-top:12px;" class="kpi">
+          <span>Reality check:</span> <strong>Automation + health checks + scheduling</strong> are the core levers behind agility and resilience.
+        </div>
+      </section>
+
+      <section id="case-studies" class="card">
+        <h2>Case Studies</h2>
+        <div class="search" style="margin:10px 0 14px;">
+          <input id="cs-search" placeholder="Filter (e.g., government, ML, developer velocity, multicloud)" />
+        </div>
+
+        <article class="case" data-tags="government modernization microservices developer velocity">
+          <h3>Booz Allen Hamilton — Federal Modernization (recreation.gov)</h3>
+          <p class="muted">Rebuilt a legacy federal booking platform into microservices on Kubernetes, enabling faster changes per agency and improved reliability.</p>
+          <p>Outcome: Change implementation dropped from days to minutes; centralized ingress and security simplified operations at scale.</p>
+          <div class="chips"><span class="tag">GovTech</span><span class="tag">Microservices</span><span class="tag">Ingress</span></div>
+        </article>
+
+        <article class="case" data-tags="travel platform engineering developer velocity ml">
+          <h3>Booking.com — Native Kubernetes Platform</h3>
+          <p class="muted">Shifted from a heavy distro to vanilla Kubernetes, training engineers on native APIs and patterns.</p>
+          <p>Outcome: New service setup in minutes; hundreds of services, ML inference workloads, and frequent safe releases.</p>
+          <div class="chips"><span class="tag">Platform</span><span class="tag">Velocity</span><span class="tag">ML</span></div>
+        </article>
+
+        <article class="case" data-tags="multicloud portability managed services">
+          <h3>Booking Group — Managed K8s + Open Standards</h3>
+          <p class="muted">Adopted a managed Kubernetes service with VPN and managed databases for a flexible multi-cloud posture.</p>
+          <p>Outcome: Intelligent scheduling, autoscaling, and self-healing with consistent tooling across environments.</p>
+          <div class="chips"><span class="tag">Multicloud</span><span class="tag">Managed</span></div>
+        </article>
+      </section>
+
+      <section id="patterns" class="card">
+        <h2>Architecture Patterns</h2>
+        <table class="table">
+          <thead><tr><th>Pattern</th><th>Benefit</th><th>K8s Features</th></tr></thead>
+          <tbody>
+            <tr><td>Microservices</td><td>Independent deploys, resilience</td><td>Deployments, Services, Ingress, Rollouts</td></tr>
+            <tr><td>ML Serving</td><td>Autoscale, efficient scheduling</td><td>HPA, Node Pools, Affinity/Taints</td></tr>
+            <tr><td>Hybrid/Multi-cloud</td><td>Portability</td><td>Conformant clusters, GitOps</td></tr>
+            <tr><td>Platform Engineering</td><td>Golden paths, guardrails</td><td>OPA, Operators, Admission control</td></tr>
+          </tbody>
+        </table>
+      </section>
+
+      <section id="decision" class="card">
+        <h2>Decision Guide</h2>
+        <ul>
+          <li>Choose K8s when you need scale, automation, portability, or internal platform consistency.</li>
+          <li>For simple, stable apps, consider PaaS/VM first; adopt K8s as complexity grows.</li>
+          <li>Prereqs: CI/CD, observability, container maturity, SRE on-call readiness.</li>
+        </ul>
+      </section>
+
+      <section id="snippets" class="card">
+        <h2>Operational Snippets</h2>
+
+        <div>
+          <button class="copy" data-copy="dep1">Copy</button>
+          <strong>Deployment with Probes + Resources</strong>
+          <pre id="dep1"><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: web
+spec:
+  replicas: 3
+  selector: { matchLabels: { app: web } }
+  template:
+    metadata: { labels: { app: web } }
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/acme/web:1.2.3
+        ports: [{ containerPort: 8080 }]
+        resources:
+          requests: { cpu: "250m", memory: "256Mi" }
+          limits:   { cpu: "750m", memory: "512Mi" }
+        readinessProbe:
+          httpGet: { path: /healthz, port: 8080 }
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        livenessProbe:
+          httpGet: { path: /livez, port: 8080 }
+          initialDelaySeconds: 10
+          periodSeconds: 10</code></pre>
+        </div>
+
+        <div>
+          <button class="copy" data-copy="hpa1">Copy</button>
+          <strong>Horizontal Pod Autoscaler</strong>
+          <pre id="hpa1"><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: web-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: web
+  minReplicas: 3
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70</code></pre>
+        </div>
+
+        <div>
+          <button class="copy" data-copy="svc1">Copy</button>
+          <strong>Service + Ingress (TLS)</strong>
+          <pre id="svc1"><code>apiVersion: v1
+kind: Service
+metadata:
+  name: web
+spec:
+  selector: { app: web }
+  ports: [{ name: http, port: 80, targetPort: 8080 }]
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  tls:
+  - hosts: [ "app.example.com" ]
+    secretName: web-tls
+  rules:
+  - host: app.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: web
+            port: { number: 80 }</code></pre>
+        </div>
+      </section>
+
+      <section id="faqs" class="card">
+        <h2>FAQs</h2>
+        <p><strong>Is K8s overkill for small apps?</strong> Sometimes—managed PaaS can be faster until complexity demands K8s.</p>
+        <p><strong>Does K8s help ML?</strong> Yes—predictable environments and autoscaling for inference/batch.</p>
+        <p><strong>Is multi-cloud realistic?</strong> With discipline (GitOps, portable services) it’s very achievable.</p>
+      </section>
+    </section>
+  </section>
+</main>
+
+<script>
+  // TOC highlight
+  const links = document.querySelectorAll('.tocnav a');
+  const sections = [...document.querySelectorAll('section[id]')];
+  const onScroll = () => {
+    let cur = sections[0];
+    for (const s of sections) {
+      const rect = s.getBoundingClientRect();
+      if (rect.top <= 120) cur = s;
+    }
+    links.forEach(a => a.classList.toggle('active', a.getAttribute('href') === '#' + cur.id));
+  };
+  document.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  // Copy buttons
+  document.querySelectorAll('.copy').forEach(btn => {
+    btn.addEventListener('click', async () => {
+      const id = btn.dataset.copy;
+      const text = document.getElementById(id).innerText;
+      await navigator.clipboard.writeText(text);
+      const old = btn.textContent;
+      btn.textContent = 'Copied!';
+      setTimeout(() => btn.textContent = old, 1200);
+    });
+  });
+
+  // Case study filter
+  const input = document.getElementById('cs-search');
+  const cases = document.querySelectorAll('.case');
+  const filter = () => {
+    const q = (input.value || '').toLowerCase().trim();
+    cases.forEach(c => {
+      const hay = (c.innerText + ' ' + (c.dataset.tags || '')).toLowerCase();
+      c.style.display = hay.includes(q) ? '' : 'none';
+    });
+  };
+  input.addEventListener('input', filter);
+</script>
+</body>
+</html>
