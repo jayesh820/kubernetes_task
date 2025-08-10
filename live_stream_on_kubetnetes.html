@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>How to Launch a Live‑Stream Website on Kubernetes — A Complete Guide</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <style>
+    body { font-family: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; }
+    .hero { background:linear-gradient(90deg, rgba(14,165,233,0.06), rgba(99,102,241,0.03)); }
+    pre { background:#0b1220; color:#e6edf3; padding:1rem; border-radius:8px; overflow:auto; }
+    .card { box-shadow: 0 10px 30px rgba(2,6,23,0.06); }
+    .pill { background:linear-gradient(90deg,#06b6d4,#7c3aed); color:white; padding:.25rem .6rem; border-radius:999px; font-weight:600; }
+  </style>
+</head>
+<body class="bg-gray-50 text-gray-800">
+  <header class="hero py-12">
+    <div class="max-w-6xl mx-auto px-6">
+      <div class="flex flex-col md:flex-row md:items-center md:justify-between">
+        <div>
+          <h1 class="text-3xl md:text-4xl font-extrabold">How to Launch a Live‑Stream Website on <span class="text-indigo-600">Kubernetes</span></h1>
+          <p class="mt-4 text-gray-600 max-w-3xl">A practical, step-by-step guide covering architecture, container images, manifests, autoscaling, CI/CD, monitoring, and production hardening — everything you need to get a scalable live streaming site running on Kubernetes.</p>
+        </div>
+        <div class="mt-6 md:mt-0">
+          <a class="px-4 py-2 bg-indigo-600 text-white rounded-lg" href="#quickstart">Quickstart</a>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-6 -mt-8 pb-16">
+
+    <section id="intro" class="bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Why Kubernetes for Live Streaming?</h2>
+      <p class="mt-3 text-gray-600">Kubernetes helps you build a resilient, scalable live streaming platform that can handle unpredictable traffic spikes, orchestrate transcoding jobs, and integrate CDNs and storage. It makes rollout, rollback, and autoscaling predictable and repeatable.</p>
+      <ul class="mt-4 list-disc list-inside text-gray-600">
+        <li>Pod-level autoscaling and resource isolation</li>
+        <li>Rolling updates and zero-downtime deploys</li>
+        <li>Sidecar patterns for transcoding, logging, and monitoring</li>
+        <li>Integrations with cloud storage (S3), CDNs (CloudFront) and managed database services</li>
+      </ul>
+    </section>
+
+    <section id="architecture" class="mt-8 grid md:grid-cols-2 gap-6">
+      <article class="bg-white p-6 rounded-xl card">
+        <h3 class="text-xl font-semibold">Reference Architecture</h3>
+        <p class="mt-3 text-gray-600">A production-ready live-stream platform typically contains:</p>
+        <ol class="mt-3 list-decimal list-inside text-gray-600">
+          <li>Ingest (RTMP, SRT, WebRTC) — NGINX-RTMP or a media server (mediasoup, Janus)</li>
+          <li>Transcoding — FFmpeg workers (Kubernetes Jobs or sidecars) or managed services</li>
+          <li>Storage — object store (S3/MinIO) for recorded chunks and HLS segments</li>
+          <li>Delivery — HLS/DASH served via CDN (CloudFront) for viewers</li>
+          <li>Signaling & WebApp — WebRTC signaling, auth, chat (Node/Go) behind Ingress</li>
+          <li>Observability — Prometheus, Grafana, ELK/Fluentd for logs</li>
+        </ol>
+      </article>
+
+      <article class="bg-white p-6 rounded-xl card">
+        <h3 class="text-xl font-semibold">Traffic Flow (high level)</h3>
+        <p class="mt-3 text-gray-600">Broadly:</p>
+        <ol class="mt-3 list-decimal list-inside text-gray-600">
+          <li>Streamer → RTMP/SRT → Ingest Service (Deployment)</li>
+          <li>Ingest writes raw segments to shared storage (S3/MinIO)</li>
+          <li>Transcoder (Kubernetes Job / Deployment) creates HLS/DASH segments</li>
+          <li>CDN pulls HLS segments and serves viewers</li>
+          <li>App servers handle auth, chat, analytics, and viewer personalization</li>
+        </ol>
+      </article>
+    </section>
+
+    <section id="quickstart" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Quickstart — Minimal RTMP Ingest on Kubernetes</h2>
+      <p class="mt-3 text-gray-600">This quick example uses <span class="pill">tiangolo/nginx-rtmp</span> Docker image for RTMP ingest and writes HLS to a shared Persistent Volume (for demo only). Replace PV with S3/MinIO in prod.</p>
+
+      <h4 class="mt-4 font-semibold">Sample Dockerfile (for your webapp)</h4>
+      <pre><code># Dockerfile (web app + simple viewer)
+FROM node:18-alpine
+WORKDIR /app
+COPY package*.json ./
+RUN npm ci --only=production
+COPY . .
+EXPOSE 3000
+CMD ["node","server.js"]</code></pre>
+
+      <h4 class="mt-4 font-semibold">nginx-rtmp Deployment (k8s manifest)</h4>
+      <pre><code>apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-rtmp
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-rtmp
+  template:
+    metadata:
+      labels:
+        app: nginx-rtmp
+    spec:
+      containers:
+      - name: nginx-rtmp
+        image: tiangolo/nginx-rtmp
+        ports:
+        - containerPort: 1935
+        volumeMounts:
+        - mountPath: /tmp/hls
+          name: hls
+      volumes:
+      - name: hls
+        persistentVolumeClaim:
+          claimName: hls-pvc
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-rtmp
+spec:
+  type: ClusterIP
+  ports:
+  - name: rtmp
+    port: 1935
+    targetPort: 1935
+  selector:
+    app: nginx-rtmp</code></pre>
+
+      <p class="mt-3 text-gray-600">Apply with: <code>kubectl apply -f nginx-rtmp.yaml</code>. Stream with OBS to <code>rtmp://&lt;cluster-ip-or-ingress-host&gt;/live/streamkey</code>.</p>
+    </section>
+
+    <section id="transcoding" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Transcoding — FFmpeg & Worker Patterns</h2>
+      <p class="mt-3 text-gray-600">Transcoding creates viewer-friendly HLS renditions. Two common patterns:</p>
+      <ol class="mt-3 list-decimal list-inside text-gray-600">
+        <li><strong>Sidecar:</strong> Each ingest pod runs an FFmpeg sidecar that converts RTMP to HLS locally and pushes segments to S3.</li>
+        <li><strong>Worker Jobs:</strong> A controller creates Kubernetes Jobs per stream that run FFmpeg and exit when stream ends — more scalable for bursty workloads.</li>
+      </ol>
+
+      <h4 class="mt-4 font-semibold">Example: FFmpeg Kubernetes Job (simplified)</h4>
+      <pre><code>apiVersion: batch/v1
+kind: Job
+metadata:
+  name: transcode-job-stream123
+spec:
+  template:
+    spec:
+      containers:
+      - name: ffmpeg
+        image: jrottenberg/ffmpeg:4.3-alpine
+        args:
+        - -i
+        - rtmp://nginx-rtmp/live/stream123
+        - -c:v
+        - libx264
+        - -vf
+        - scale=-2:720
+        - -hls_time
+        - "4"
+        - /tmp/hls/stream123_720p.m3u8
+        volumeMounts:
+        - name: hls
+          mountPath: /tmp/hls
+      restartPolicy: Never
+      volumes:
+      - name: hls
+        persistentVolumeClaim:
+          claimName: hls-pvc
+  backoffLimit: 0</code></pre>
+    </section>
+
+    <section id="ingress-tls" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Ingress, TLS & Domain Setup</h2>
+      <p class="mt-3 text-gray-600">Use an HTTP(S) Ingress for your web app and WebRTC signaling. For RTMP, expose via a Service + LoadBalancer or use NodePort + external LB. Use <code>cert-manager</code> to provision Let's Encrypt certificates automatically.</p>
+
+      <pre><code>apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web-ingress
+  annotations:
+    kubernetes.io/ingress.class: nginx
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+spec:
+  tls:
+  - hosts:
+    - live.example.com
+    secretName: live-example-tls
+  rules:
+  - host: live.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: webapp
+            port:
+              number: 80</code></pre>
+
+    </section>
+
+    <section id="autoscaling" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Autoscaling: HPA, VPA & KEDA</h2>
+      <p class="mt-3 text-gray-600">Use HorizontalPodAutoscaler (HPA) for CPU/memory-based autoscaling. For event-driven scaling (e.g., number of concurrent streams), use <a class="text-indigo-600" href="https://keda.sh/">KEDA</a> to scale based on custom metrics like queue depth or Redis keys.</p>
+
+      <pre><code>apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: webapp-hpa
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: webapp
+  minReplicas: 2
+  maxReplicas: 20
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 60</code></pre>
+
+      <p class="mt-3 text-gray-600">For scaling FFmpeg workers per stream, consider a controller that creates Jobs dynamically or KEDA paired with a message queue (e.g., SQS, RabbitMQ).</p>
+    </section>
+
+    <section id="cicd" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">CI/CD — Build, Push, Deploy</h2>
+      <p class="mt-3 text-gray-600">A simple GitHub Actions pipeline that builds images, pushes to a registry, and runs a rolling update:</p>
+      <pre><code>name: CI
+on: [push]
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build Docker image
+        run: docker build -t ghcr.io/yourorg/webapp:${{ github.sha }} .
+      - name: Push image
+        run: |
+          echo ${{ secrets.GHCR_TOKEN }} | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+          docker push ghcr.io/yourorg/webapp:${{ github.sha }}
+      - name: Set image in k8s manifest
+        run: kubectl set image deployment/webapp webapp=ghcr.io/yourorg/webapp:${{ github.sha }} --record
+</code></pre>
+    </section>
+
+    <section id="observability" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Monitoring & Logging</h2>
+      <p class="mt-3 text-gray-600">Essential tools:</p>
+      <ul class="mt-3 list-disc list-inside text-gray-600">
+        <li>Prometheus + Grafana for metrics (stream counts, transcoder latency)</li>
+        <li>Fluentd/Vector -> ELK or OpenSearch for logs</li>
+        <li>Tempo/Jaeger for tracing (optional)</li>
+        <li>Alerting via Alertmanager (e.g., stream failure, high error rates)</li>
+      </ul>
+    </section>
+
+    <section id="security" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Security & Hardening</h2>
+      <ul class="mt-3 list-disc list-inside text-gray-600">
+        <li>Use mTLS between services if you handle sensitive streams.</li>
+        <li>Enable network policies to restrict traffic flow between namespaces.</li>
+        <li>Store secrets in Kubernetes Secrets (or AWS Secrets Manager) and mount as env vars or files.</li>
+        <li>Use resource requests/limits to avoid noisy neighbor problems.</li>
+        <li>Scan container images with tools like Trivy and apply runtime security (Falco).</li>
+      </ul>
+    </section>
+
+    <section id="cdn-storage" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Storage & CDN</h2>
+      <p class="mt-3 text-gray-600">For production, offload HLS segments to an object store (S3) and serve via a CDN (CloudFront, Cloudflare). Configure origin cache rules for HLS manifests and set short TTLs for live segments.</p>
+    </section>
+
+    <section id="costs" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Cost Considerations</h2>
+      <p class="mt-3 text-gray-600">Major cost drivers: egress (CDN), transcoding CPU/GPU, storage, and load balancers. Optimize by:</p>
+      <ul class="mt-3 list-disc list-inside text-gray-600">
+        <li>Using spot instances for non-critical batch transcodes</li>
+        <li>Right-sizing transcoding workers</li>
+        <li>Caching aggressively at CDN layer</li>
+        <li>Retaining HLS segments for a short window</li>
+      </ul>
+    </section>
+
+    <section id="troubleshooting" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Troubleshooting Checklist</h2>
+      <ul class="mt-3 list-disc list-inside text-gray-600">
+        <li>Cannot connect with OBS: check RTMP port, LB/NAT, and firewall rules.</li>
+        <li>No HLS segments: verify FFmpeg logs and storage permissions.</li>
+        <li>High transcoder latency: increase CPU/GPU or use faster instances.</li>
+        <li>Viewer buffering: tune HLS chunk duration and CDN cache settings.</li>
+      </ul>
+    </section>
+
+    <section id="extras" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Advanced Topics & Extras</h2>
+      <ul class="mt-3 list-disc list-inside text-gray-600">
+        <li><strong>WebRTC for low-latency:</strong> Use mediasoup / Janus + a TURN server. Requires signaling and ICE/STUN/TURN infra.</li>
+        <li><strong>GPU transcoders:</strong> Use NVIDIA-device-plugin + GPU nodes for heavy transcoding.</li>
+        <li><strong>Serverless transcode:</strong> Use AWS Elemental MediaConvert or Lambda-based chunk processors for simpler ops.</li>
+        <li><strong>Analytics:</strong> Stream telemetry to Kafka/Kinesis and process with Flink/Spark for real-time insights.</li>
+      </ul>
+    </section>
+
+    <section id="checklist" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Launch Checklist (Minimum Viable)</h2>
+      <ol class="mt-3 list-decimal list-inside text-gray-600">
+        <li>Basic RTMP ingest + HLS generation (test with OBS)</li>
+        <li>Web app + viewer using HLS manifest</li>
+        <li>S3 (or PV) integration and CDN configured</li>
+        <li>Ingress, TLS, and domain set up</li>
+        <li>CI/CD pipeline for images and manifests</li>
+        <li>Monitoring, logging, and alerting in place</li>
+        <li>Security: network policies, secrets, and image scanning</li>
+      </ol>
+    </section>
+
+    <section id="resources" class="mt-8 bg-white p-8 rounded-2xl card">
+      <h2 class="text-2xl font-semibold">Resources & Useful Links</h2>
+      <ul class="mt-3 list-disc list-inside text-gray-600">
+        <li><a class="text-indigo-600" href="https://kubernetes.io/">Kubernetes Docs</a></li>
+        <li><a class="text-indigo-600" href="https://keda.sh/">KEDA — event-driven autoscaling</a></li>
+        <li><a class="text-indigo-600" href="https://ffmpeg.org/">FFmpeg</a></li>
+        <li><a class="text-indigo-600" href="https://github.com/arut/nginx-rtmp-module">nginx-rtmp</a></li>
+        <li><a class="text-indigo-600" href="https://cert-manager.io/">cert-manager</a></li>
+        <li><a class="text-indigo-600" href="https://prometheus.io/">Prometheus</a> + <a class="text-indigo-600" href="https://grafana.com/">Grafana</a></li>
+      </ul>
+    </section>
+
+    <section class="mt-8 text-sm text-gray-500">
+      <p>Need this converted into a multi-page site, React/Next.js template, or a downloadable PDF? Tell me which format and I’ll convert and add images, diagrams, and exact manifests tailored to your cloud provider (AWS / GCP / Azure).</p>
+    </section>
+
+  </main>
+
+  <footer class="py-8 text-center text-gray-500 text-sm">
+    © 2025 — Live Streaming on Kubernetes • Built with care
+  </footer>
+</body>
+</html>
